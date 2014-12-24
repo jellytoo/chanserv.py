@@ -333,8 +333,17 @@ class Action(object):
                 self.resolved = True
                 if 'gateway/' in self.target_host and self.bans == 'h' and self.do_ban:
                     # For gateway/* users, default to ident ban
-                    self.actions.append('mode %(channel)s +%(banmode)s *!%(target_ident)s@gateway/*%(forward_to)s')
                     self.actions.remove('mode %(channel)s +%(banmode)s *!*@%(target_host)s%(forward_to)s')
+                    # unless freenode web irc,
+                    if self.target_host.startswith('gateway/web/freenode/ip.'):
+                        self.target_host = self.target_host.split('/ip.', 1)[1]
+                        self.actions.append('mode %(channel)s +%(banmode)s *!*@%(target_host)s%(forward_to)s')
+                    # or freenode via tor
+                    elif self.target_host.startswith('gateway/tor-sasl/'):
+                        self.actions.append('mode %(channel)s +%(banmode)s *!*@%(target_host)s%(forward_to)s')
+                    else:
+                        self.actions.append('mode %(channel)s +%(banmode)s *!%(target_ident)s@gateway/*%(forward_to)s')
+
         else:
             if request:
                 self.context.command('whois %s' % self.target_nick)
